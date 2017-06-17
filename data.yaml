@@ -1,0 +1,15 @@
+disc_1:
+    mass: 1
+    linear_velocity: [1, 1]
+    angular_velocity: 1
+    alpha: 8 
+    radius: 1
+disc_2:
+    mass: 1
+    linear_velocity: [1, 1]
+    angular_velocity: 1
+    alpha: 8
+    radius: 1
+e : 0.5
+n : 0.5
+b : 0.5

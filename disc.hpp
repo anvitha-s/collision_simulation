@@ -2,6 +2,8 @@
 #include <armadillo>
 #include <yaml-cpp/yaml.h>
 #include "solvePoly.hpp"
+#include <algorithm>
+#include <queue>
 
 using namespace std;
 using namespace arma;
@@ -22,7 +24,7 @@ class Disc
         velocity << node1_[0].as<double>() << node1_[1].as<double>() << 0;
         node1_ = node_["angular_velocity"];
         angular_velocity << 0 << 0 <<node1_.as<double>();
-    }
+        }
 };
 
 struct PIC
@@ -31,11 +33,15 @@ struct PIC
     map<int,std::vector<int>> disc_indices;
     double collision_instance;
     
-    void addPIC(std::vector<int> a_)
+    void addPIC(int b_,std::vector<int> a_)
     {
-        disc_indices.push_back(a_);
-    } // or std::vector??
-    PIC(double t,int a, int b):collision_instance(t),disc_indices({a,{b}}) {};
+        disc_indices[b_] = a_;
+    }
+    PIC(){}
+    PIC(double t,int a, int b):collision_instance(t) 
+    {
+        disc_indices[a] = {b};
+    };
 };
 
 class State
@@ -43,14 +49,24 @@ class State
     public:
     PIC predicted_collision;
     std::vector<Disc> discs;
-    std::map<int,std::vector<double>> impulses;
-    vector<vector<int>> stackGenerator(std::pair<int,vector<int>>& p);
+    std::map<int,std::vector<vec>> impulses;
+    vector<vector<int>> stackGenerator(std::pair<int,vector<int>> p);
 
+    State(){}
     PIC PICgenerator(const int& d1);
     double PICgenerator(const int& d1,const int& d2);
     void updateState();
     vec findPOC(const int& d1,const int& d2);
     void impactUpdate(const int& d1,const int& d2);
     void inContact(const int& d1,const int& d2);
+    void velocityUpdate(int d1);
+    void collisionUpdate();
+    void removeContact(const int& d1,const int& d2);
 };
 
+class StateQ
+{
+    public:
+    std::queue<State> q;
+    void updateQueue();
+}stateQ;

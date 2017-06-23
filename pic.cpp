@@ -61,7 +61,7 @@ void State::impactUpdate(const int& d1,const int& d2)
     impulses[d2][1] += cross(k,J);
 }
 
-void velocityUpdate(int d1 = -1)
+void State::velocityUpdate(int d1 = -1)
 {
     if(d1 != -1)
     {
@@ -74,22 +74,19 @@ void velocityUpdate(int d1 = -1)
         }
         return;
     }
-    vector<int> a = {d1,d2};
-    for(int b:a)
+
+    if(impulses.find(d1) != impulses.end())
     {
-        if(impulses.find(b) != impulses.end())
-        {
-            discs[d1].velocity += impulses[d1][0]/discs[d1].mass;
-            discs[d1].angular_velocity += impulses[d1][1]*(discs[d1].radius/discs[d1].I);
-        }
+        discs[d1].velocity += impulses[d1][0]/discs[d1].mass;
+        discs[d1].angular_velocity += impulses[d1][1]*(discs[d1].radius/discs[d1].I);
     }
 }
 
 void State::collisionUpdate()
 {
-    for(auto it;it = disc_indices.begin();++it)
+    for(auto it = predicted_collision.disc_indices.begin();it!=predicted_collision.disc_indices.end();++it)
     {
-        std::vector<std::vector<int>> stack = stackGenerator(*it);
+        std::vector<std::vector<int>> stack = stackGenerator(std::pair<int,vector<int>>(*it));
         for(auto i:stack)
         {
            impactUpdate(i[0],i[1]);
@@ -166,7 +163,7 @@ void State::updateState()
             }
             if(t != -1 && t == minPICi.collision_instance || minPICi.collision_instance == -1)
             {
-                minPICi.disc_indices.push_back(k);
+                minPICi.disc_indices[i].push_back(k);
             }
         }
         for(int k = 0; k < nonActiveIndices.size(); k++)
@@ -178,7 +175,7 @@ void State::updateState()
             }
             if(t != -1 && t == minPICi.collision_instance || minPICi.collision_instance == -1)
             {
-                minPICi.disc_indices.push_back(k);
+                minPICi.disc_indices[i].push_back(k);
             }
         }
         if(minPICi.collision_instance != -1 && (minPICi.collision_instance < minPIC.collision_instance || minPIC.collision_instance == -1))
@@ -197,28 +194,48 @@ void State::updateState()
     //push to state queue
 }
 
-vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>>& p)
+void State::removeContact(const int& d1,const int& d2)
+{
+    auto it = find(discs[d1].contact_pairs.begin(),discs[d1].contact_pairs.end(),d2);
+    if(it != discs[d1].contact_pairs.end())
+        discs[d1].contact_pairs.erase(it);
+    it = find(discs[d2].contact_pairs.begin(),discs[d2].contact_pairs.end(),d1);
+    if(it != discs[d2].contact_pairs.end())
+        discs[d2].contact_pairs.erase(it);
+}
+
+void orderVector(vector<int> a){}
+
+vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>> p)
 {
     std::vector<std::vector<int>> stack;
     srand(time(NULL));
-    switch(disc_indices[p.first].size())
+    switch(predicted_collision.disc_indices[p.first].size())
     {
-        case 1: stack.push_back({p.first,p.second()[0]});
+        case 1: stack.push_back({p.first,p.second[0]});
                 break;
         case 2: 
+                {
                 int i = rand()%2;
                 stack.push_back({p.first,p.second[i]});  
                 stack.push_back({p.first,p.second[(i+1)%2]});
                 removeContact(p.second[i],p.second[(i+1)%2]);
                 break;
+                }
         case 3:
+                {
                 int i = rand()%8;
                 orderVector(p.second);
                 if(0 <= i < 2)
                 {
                     stack.push_back({p.first,p.second[1]});
-                    vector<vector<int>> s = stackGenerator(make_pair(p.first,{p.second[0],p.second[2]}));
-                    std::copy(s,s+s.size(),stack + 1);
+                    vector<int> t = {p.second[0],p.second[2]};
+                    pair<int,vector<int>> o = std::make_pair(p.first,t);
+                    vector<vector<int>> s = stackGenerator(o);
+                    for(auto it: s)
+                    {
+                        stack.push_back(it);
+                    }
                 }
                 else if(i < 5)
                 {
@@ -232,8 +249,11 @@ vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>>& p)
                     stack.push_back({p.first,p.second[1]});
                     stack.push_back({p.first,p.second[2]});
                 }
-                removeContact(p.second);
+                removeContact(p.second[0],p.second[1]);
+                removeContact(p.second[0],p.second[2]);
+                removeContact(p.second[2],p.second[1]);
                 break;
+                }
     }
     return stack;
 }
@@ -311,7 +331,7 @@ void StateQ::updateQueue()
     {
         a.updateState();
         q.push(a);
-    }while(a.predicted_collision.collision_instance >= 0 )
+    }while(a.predicted_collision.collision_instance >= 0 );
 }
 
 int main()

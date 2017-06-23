@@ -1,6 +1,10 @@
+#include <iostream>
+#include <cmath>
 /*functions solveCubic and solveQuartic to solve 4th order polynomials from 
 https://stackoverflow.com/questions/11837078/initialize-a-constant-sized-array-in-an-initializer-list
 */
+
+using namespace std;
 
 const double PI = 3.14159265358979323846;
 

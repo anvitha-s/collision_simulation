@@ -1,7 +1,11 @@
 #include <iostream>
 #include <cmath>
-/*functions solveCubic and solveQuartic to solve 4th order polynomials from 
-https://stackoverflow.com/questions/11837078/initialize-a-constant-sized-array-in-an-initializer-list
+#include "disc.hpp"
+
+/**
+ * functions solveCubic and solveQuartic to solve 4th order polynomials 
+ * from :
+ * https://stackoverflow.com/questions/11837078/initialize-a-constant-sized-array-in-an-initializer-list
 */
 
 using namespace std;
@@ -171,3 +175,5 @@ bool solveQuartic(double a, double b, double c, double d, double e, double &root
     }
     return false;
 }
+
+#endif //_SOLVE_POLY_HPP_

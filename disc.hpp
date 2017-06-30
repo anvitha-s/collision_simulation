@@ -1,13 +1,19 @@
+#ifndef _DISC_HPP_
+#define _DISC_HPP_
+
 #include <iostream>
 #include <armadillo>
 #include <yaml-cpp/yaml.h>
-#include "solvePoly.hpp"
 #include <algorithm>
 #include <queue>
+#include <thread>
 
 using namespace std;
 using namespace arma;
 
+#define INIT_STATE -2
+#define DISC_MASS 1
+#define DISC_RADIUS 10
 
 class Disc
 {
@@ -15,6 +21,10 @@ class Disc
     double radius,I,mass;
     vec velocity,angular_velocity,position;
     vector<int> contact_pairs;
+    Disc():velocity({0,0,0}),angular_velocity({0,0,0}),mass(DISC_MASS),radius(DISC_RADIUS) {
+    std::cout << "default constr\n";
+        I = (mass*pow(radius,2))*0.5;
+    }
     Disc(YAML::Node node_)
     {
         radius = node_["radius"].as<double>();
@@ -24,7 +34,8 @@ class Disc
         velocity << node1_[0].as<double>() << node1_[1].as<double>() << 0;
         node1_ = node_["angular_velocity"];
         angular_velocity << 0 << 0 <<node1_.as<double>();
-        }
+        
+    }
 };
 
 struct PIC
@@ -47,21 +58,32 @@ struct PIC
 class State
 {
     public:
+    int no_discs;
     PIC predicted_collision;
+    double stopping_time;
     std::vector<Disc> discs;
     std::map<int,std::vector<vec>> impulses;
     vector<vector<int>> stackGenerator(std::pair<int,vector<int>> p);
 
-    State(){}
+    State(){};
+    State(int noDiscs_):predicted_collision(-2,-1,-1),no_discs(noDiscs_)
+    {
+        std::cout << "resizing\n";
+        discs.resize(no_discs);
+    }
     PIC PICgenerator(const int& d1);
     double PICgenerator(const int& d1,const int& d2);
     void updateState();
     vec findPOC(const int& d1,const int& d2);
     void impactUpdate(const int& d1,const int& d2);
     void inContact(const int& d1,const int& d2);
-    void velocityUpdate(int d1);
+    void velocityUpdate(int d1 = -1);
     void collisionUpdate();
     void removeContact(const int& d1,const int& d2);
+    void computeStoppingTime(std::vector<int> activeIndices_);
+    void updateVelocities(const int& d1,const int& d2);
+    void printDebug();
+
 };
 
 class StateQ
@@ -69,4 +91,11 @@ class StateQ
     public:
     std::queue<State> q;
     void updateQueue();
-}stateQ;
+    void initialiseQueue(vec& initVel_,int noDiscs_,std::vector<vec> positionMap_);
+    std::thread computationThread;
+};
+ 
+bool solveQuadratic(double &a, double &b, double &c, double &root);
+bool solveCubic(double a, double b, double c, double d, double &root);
+bool solveQuartic(double a, double b, double c, double d, double e, double &root);
+#endif //_DISC_HPP_

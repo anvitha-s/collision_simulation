@@ -6,9 +6,9 @@
 using namespace arma;
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 640;
+const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 480;
-const int NO_DISCS = 2;
+const int NO_DISCS = 3;
 //Texture wrapper class
 class LTexture
 {
@@ -450,20 +450,14 @@ void close()
 int main( int argc, char* args[] )
 {
 
-    vec v1 = {1,1,0};
-    vec d1 = {200,200,0};
+    vec v1 = {10,0,0};
+    vec d1 = {10,200,0};
     vec v2 = {0,0,0};
-    vec d2 = {400,400,0};
+    vec d2 = {800,210,0};
+    vec d3 = {800,190,0};
 
-    std::vector<vec> position_map = {d1,d2};
+    std::vector<vec> position_map = {d1,d2,d3};
     //    std::cout << "s1\n";
-
-    Disc d;
-    d.velocity = v1;
-    d.radius = 1; 
-    d.mass = 1; 
-    d.position = d1;
-
     //    std::cout << "s2\n";
     StateQ Q;
     Q.initialiseQueue(v1,NO_DISCS,position_map);
@@ -490,6 +484,7 @@ int main( int argc, char* args[] )
             SDL_Event e;
             while(Q.q.size() > 0)
             {
+                std::cout << "DISCS SIZE: " << Q.q.front().discs.size() << std::endl;
                 dots.resize(Q.q.front().discs.size()); 
                 //The dot that will be moving around on the screen
                 for(int p = 0;p < Q.q.front().discs.size();p++)
@@ -518,7 +513,6 @@ int main( int argc, char* args[] )
                     {
                         break;
                     }
-                    std::cout << "here\n";
 
                     //Move the dot
 
@@ -540,7 +534,7 @@ int main( int argc, char* args[] )
                 }
                 Q.q.pop();
             }
-        Q.computationThread.join();
+            Q.computationThread.join();
         }
     }
 

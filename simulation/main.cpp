@@ -8,7 +8,6 @@ using namespace arma;
 //Screen dimension constants
 const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 480;
-const int NO_DISCS = 3;
 //Texture wrapper class
 class LTexture
 {
@@ -118,7 +117,6 @@ class Dot
         //The velocity of the dot
         int mVelX, mVelY;
 };
-
 //Starts up SDL and creates window
 bool init();
 
@@ -197,7 +195,6 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 {
     //Get rid of preexisting texture
     free();
-
     //Render text surface
     SDL_Surface* textSurface = TTF_RenderText_Solid( gFont, textureText.c_str(), textColor );
     if( textSurface != NULL )
@@ -355,7 +352,6 @@ void Dot::move()
         mPosY += dotVel[1];
     }
 }
-
 void Dot::render()
 {
     //Show the dot
@@ -384,7 +380,7 @@ bool init()
         //Create window
         gWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
         if( gWindow == NULL )
-        {
+{
             printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
             success = false;
         }
@@ -412,7 +408,6 @@ bool init()
             }
         }
     }
-
     return success;
 }
 
@@ -453,10 +448,11 @@ int main( int argc, char* args[] )
     vec v1 = {10,0,0};
     vec d1 = {10,200,0};
     vec v2 = {0,0,0};
-    vec d2 = {800,210,0};
-    vec d3 = {800,190,0};
+    vec d2 = {800 - DISC_RADIUS,200 + 10*sqrt(3) ,0};
+    vec d3 = {800 - DISC_RADIUS,200 - 10*sqrt(3) ,0};
+    vec d4 = {800,200,0};
 
-    std::vector<vec> position_map = {d1,d2,d3};
+    std::vector<vec> position_map = {d1,d2,d3,d4};
     //    std::cout << "s1\n";
     //    std::cout << "s2\n";
     StateQ Q;

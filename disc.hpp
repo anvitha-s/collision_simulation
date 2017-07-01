@@ -14,6 +14,7 @@ using namespace arma;
 #define INIT_STATE -2
 #define DISC_MASS 1
 #define DISC_RADIUS 10
+#define NO_DISCS 4
 
 class Disc
 {

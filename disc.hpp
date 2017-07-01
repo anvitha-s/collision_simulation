@@ -83,7 +83,7 @@ class State
     void computeStoppingTime(std::vector<int> activeIndices_);
     void updateVelocities(const int& d1,const int& d2);
     void printDebug();
-
+    void timeUpdate();
 };
 
 class StateQ

@@ -463,6 +463,7 @@ int main( int argc, char* args[] )
     Q.initialiseQueue(v1,NO_DISCS,position_map);
     //    std::cout << "s3\n";
     std::vector<Dot> dots;
+    State currState;
     //Start up SDL and create window
     if( !init() )
     {
@@ -484,13 +485,14 @@ int main( int argc, char* args[] )
             SDL_Event e;
             while(Q.q.size() > 0)
             {
-                std::cout << "DISCS SIZE: " << Q.q.front().discs.size() << std::endl;
-                dots.resize(Q.q.front().discs.size()); 
+                currState = Q.q.front();
+                std::cout << "DISCS SIZE: " << currState.discs.size() << std::endl;
+                dots.resize(currState.discs.size()); 
                 //The dot that will be moving around on the screen
-                for(int p = 0;p < Q.q.front().discs.size();p++)
-                    dots[p] = Dot(Q.q.front().discs[p].velocity,Q.q.front().discs[p].position);
+                for(int p = 0;p < dots.size();p++)
+                    dots[p] = Dot(currState.discs[p].velocity,currState.discs[p].position);
 
-                double root = Q.q.front().predicted_collision.collision_instance; 
+                double root = currState.predicted_collision.collision_instance; 
                 //if(!tExists) 
                 //  std::cout << "doesn't collide !!!!!!!\n";
                 std::cout << "root " << root<< std::endl;
@@ -516,7 +518,7 @@ int main( int argc, char* args[] )
 
                     //Move the dot
 
-                    for(int p = 0;p < Q.q.front().discs.size();p++)
+                    for(int p = 0;p < dots.size();p++)
                         dots[p].move();
                     //Clear screen
                     SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
@@ -524,7 +526,7 @@ int main( int argc, char* args[] )
 
                     //Render objects
 
-                    for(int p = 0;p < Q.q.front().discs.size();p++)
+                    for(int p = 0;p < dots.size();p++)
                         dots[p].render();
                     //Update screen
                     SDL_RenderPresent( gRenderer );

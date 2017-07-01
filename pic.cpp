@@ -14,12 +14,13 @@ map<int,vec> boundaries = {{-1,{1,0,0}},{-2,{0,-1,0}},{-3, {-1,0,0}},{-4, {0,1,0
 
 vec State::findPOC(const int& d1,const int& d2)
 {
-    discs[d1].position = discs[d1].position + predicted_collision.collision_instance*discs[d1].velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(discs[d1].velocity);
+    /*discs[d1].position = discs[d1].position + predicted_collision.collision_instance*discs[d1].velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(discs[d1].velocity);
+    discs[d2].position = discs[d2].position + predicted_collision.collision_instance*discs[d2].velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(discs[d2].velocity);
+    */
     if(d2 < 0)
     {
         return boundaries[d2];
     }
-    discs[d2].position = discs[d2].position + predicted_collision.collision_instance*discs[d2].velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(discs[d2].velocity);
     vec c1c2 = discs[d2].position - discs[d1].position;
     return normalise(c1c2);
 }
@@ -37,7 +38,7 @@ void State::impactUpdate(const int& d1,const int& d2)
     //std::cout << "iu1\n";
     vec k,j;
     k = findPOC(d1,d2);
-    updateVelocities(d1,d2);
+    //updateVelocities(d1,d2);
     std::cout << "k : {" << k[0] << ", "<< k[1] << ", "<< k[2] << "}\n";
 //    std::cout << "iu2\n";
     double phi = (3*n*(1+e))/(b+1);
@@ -161,9 +162,23 @@ void State::velocityUpdate(int d1)
 //    std::cout << "3112\n";
 }
 
+void State::timeUpdate()
+{
+    std::cout << "before time update : \n";
+        printDebug();
+    for(auto&& d:discs)
+    {
+        d.position = d.position + predicted_collision.collision_instance*d.velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(d.velocity);
+        d.velocity = d.velocity -= n*g*predicted_collision.collision_instance*normalise(d.velocity);
+    }
+    std::cout << "after time update : \n";
+        printDebug();
+}
+
 void State::collisionUpdate()
 {
 //    std::cout << "311\n";
+    timeUpdate();
     for(auto it = predicted_collision.disc_indices.begin();it!=predicted_collision.disc_indices.end();++it)
     {
         std::cout << "DISC INDICES\n";
@@ -359,7 +374,7 @@ vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>> p)
                 {
                     std::cout << "3811\n";
                     int i = rand()%2;
-                    stack.push_back({p.first,p.second[i]});  
+                    stack.push_back({p.first,p.second[i]});
                     stack.push_back({p.first,p.second[(i+1)%2]});
                     removeContact(p.second[i],p.second[(i+1)%2]);
                     break;
@@ -520,11 +535,12 @@ void StateQ::initialiseQueue(vec& initVel_,int noDiscs_,std::vector<vec> positio
 
 void State::printDebug()
 {
-    for(auto d:discs)
+    for(int i = 0;i < discs.size();i++)
     {
-        std::cout << "velocity : {" << d.velocity[0] << ", " << d.velocity[1] << ", " << d.velocity[2] << "\n" ; 
-        std::cout << "angular_velocity : {" << d.angular_velocity[0] << ", " << d.angular_velocity[1] << ", " << d.angular_velocity[2] << "\n" ; 
-        std::cout << "position : {" << d.position[0] << ", " << d.position[1] << ", " << d.position[2] << "\n" ; 
+        std::cout << "disc index :  " << i << std::endl;
+        std::cout << "velocity : {" << discs[i].velocity[0] << ", " << discs[i].velocity[1] << ", " << discs[i].velocity[2] << "\n" ; 
+        std::cout << "angular_velocity : {" << discs[i].angular_velocity[0] << ", " << discs[i].angular_velocity[1] << ", " << discs[i].angular_velocity[2] << "\n" ; 
+        std::cout << "position : {" << discs[i].position[0] << ", " << discs[i].position[1] << ", " << discs[i].position[2] << "\n" ; 
     }
     std::cout << "pic   t: " << predicted_collision.collision_instance <<std::endl;
     for (std::map<int,vector<int>>::iterator it=predicted_collision.disc_indices.begin(); it!=predicted_collision.disc_indices.end(); ++it)

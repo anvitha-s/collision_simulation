@@ -6,8 +6,8 @@
 using namespace arma;
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 1000;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 700;
+const int SCREEN_HEIGHT = 700;
 //Texture wrapper class
 class LTexture
 {
@@ -448,6 +448,7 @@ int main( int argc, char* args[] )
     vec v1 = {10,0,0};
     vec d1 = {10,200,0};
     vec v2 = {0,0,0};
+    //vec d2 = {400,200,0};
     vec d2 = {800 - DISC_RADIUS,200 + 10*sqrt(3) ,0};
     vec d3 = {800 - DISC_RADIUS,200 - 10*sqrt(3) ,0};
     vec d4 = {800,200,0};
@@ -489,8 +490,11 @@ int main( int argc, char* args[] )
                     dots[p] = Dot(currState.discs[p].velocity,currState.discs[p].position);
 
                 double root = currState.predicted_collision.collision_instance; 
-                //if(!tExists) 
-                //  std::cout << "doesn't collide !!!!!!!\n";
+                if(root == -1)
+                {
+                    std::cout << "no collision\n"; 
+                    root = currState.stopping_time;
+                }
                 std::cout << "root " << root<< std::endl;
                 //While application is running
                 int count = 0;
@@ -523,12 +527,16 @@ int main( int argc, char* args[] )
                     //Render objects
 
                     for(int p = 0;p < dots.size();p++)
+                    {
                         dots[p].render();
+                        dots[p].dotVel -= (0.1)*normalise(dots[p].dotVel);
+                    }
                     //Update screen
                     SDL_RenderPresent( gRenderer );
                     count++;
                     if(Q.q.size() > 1 && root == -2)
                         break;
+
                 }
                 Q.q.pop();
             }

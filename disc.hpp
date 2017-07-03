@@ -75,14 +75,14 @@ class State
     PIC PICgenerator(const int& d1);
     double PICgenerator(const int& d1,const int& d2);
     void updateState();
-    vec findPOC(const int& d1,const int& d2);
+    vector<vec> findPOC(const int& d1,const int& d2);
     void impactUpdate(const int& d1,const int& d2);
     void inContact(const int& d1,const int& d2);
     void velocityUpdate(int d1 = -1);
     void collisionUpdate();
     void removeContact(const int& d1,const int& d2);
     void computeStoppingTime(std::vector<int> activeIndices_);
-    void updateVelocities(const int& d1,const int& d2);
+//    void updateVelocities(const int& d1,const int& d2);
     void printDebug();
     void timeUpdate();
 };

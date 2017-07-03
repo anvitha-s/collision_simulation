@@ -2,32 +2,30 @@
 //coeff of friction
 double n = 0;
 //acceleration due to gravity
-double g = 10;
+double g = 1;
 //coeff of restitution in the normal direction
 double e = 1;
 //coeff of restitution in the tangential direction
 double b = -1;
-double board_length;
+double board_length = 650;
 
-map<int,vec> boundaries = {{-1,{1,0,0}},{-2,{0,-1,0}},{-3, {-1,0,0}},{-4, {0,1,0}}};
+map<int,vec> boundaries = {{-1,{-1,0,0}},{-2,{0,1,0}},{-3, {1,0,0}},{-4, {0,-1,0}}};
 
-vec State::findPOC(const int& d1,const int& d2)
+vector<vec> State::findPOC(const int& d1,const int& d2)
 {
-    /*discs[d1].position = discs[d1].position + predicted_collision.collision_instance*discs[d1].velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(discs[d1].velocity);
-      discs[d2].position = discs[d2].position + predicted_collision.collision_instance*discs[d2].velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(discs[d2].velocity);
-      */
+    vec k,G;
     if(d2 < 0)
     {
-        return boundaries[d2];
+        k = boundaries[d2];
+        G = discs[d1].radius*cross(discs[d1].angular_velocity,k) + discs[d1].velocity;
     }
-    vec c1c2 = discs[d2].position - discs[d1].position;
-    return normalise(c1c2);
-}
-
-void State::updateVelocities(const int& d1,const int& d2)
-{
-    discs[d1].velocity -= n*g*predicted_collision.collision_instance*normalise(discs[d1].velocity);
-    discs[d2].velocity -= n*g*predicted_collision.collision_instance*normalise(discs[d2].velocity);
+    else
+    {    
+        vec c1c2 = discs[d2].position - discs[d1].position;
+        k = normalise(c1c2);
+        G = discs[d1].radius*cross(discs[d1].angular_velocity,k) + discs[d1].velocity - discs[d2].velocity - discs[d2].radius*cross(discs[d2].angular_velocity,k);
+    }
+    return {k,G};
 }
 
 void State::impactUpdate(const int& d1,const int& d2)
@@ -35,37 +33,59 @@ void State::impactUpdate(const int& d1,const int& d2)
     //std::cout << "start impact update\n";
     //position vector of 2 wrt 
     //std::cout << "iu1\n";
-    vec k,j;
-    k = findPOC(d1,d2);
+    vec j;
+    vector<vec> m = findPOC(d1,d2);
+    vec k = m[0];
+    vec G = m[1];
     //updateVelocities(d1,d2);
     std::cout << "k : {" << k[0] << ", "<< k[1] << ", "<< k[2] << "}\n";
     //    std::cout << "iu2\n";
     double phi = (3*n*(1+e))/(b+1);
     //    std::cout << "iu3\n";
-    vec G = discs[d1].radius*cross(discs[d1].angular_velocity,k) + discs[d1].velocity - discs[d2].velocity - discs[d2].radius*cross(discs[d2].angular_velocity,k);
     j = cross(cross(G,k),k);
     //    std::cout << "iu4\n";
     j = normalise(j);
     //    std::cout << "iu5\n";
+    std::cout << "k : " << k;
+    std::cout << "G : " << G;
     double theta = acos(as_scalar((k.t())*G));
     double A;
     double B;
     vec J;
+    std::cout << "d1 : " << d1 << "d2 : " << d2 << std::endl;
     //    std::cout << "iu6\n";
     if(d2 < 0)
     {
-        //        std::cout << "iu7\n";
-        A = -(1+e)*discs[d1].mass*as_scalar(discs[d1].velocity*k.t());
+        std::cout << "iu7\n";
+        A = -(1+e)*discs[d1].mass*as_scalar(discs[d1].velocity.t()*k);
         if(theta > phi)
+        {
             B = A*n;
+            std::cout << "1B : " << B << std::endl;        
+        }
         else
-            B = fabs((b+1)*discs[d1].mass*(norm(discs[d1].velocity)*sin(theta) - discs[d1].radius*norm(discs[d1].angular_velocity))*(1/3));    
-        //        std::cout << "iu8\n";
-        discs[d1].velocity = -1*e*discs[d1].velocity*cos(theta)*k + (discs[d1].velocity*sin(theta) - B/discs[d1].mass)*j;
+        {
+            //     B = ((b+1)*discs[d1].mass*(norm(discs[d1].velocity)*sin(theta) - discs[d1].radius*norm(discs[d1].angular_velocity))*(double(1)/3));   
+            double factor =  (1/discs[d1].mass + ((discs[d1].radius*discs[d1].radius)/discs[d1].I));
+            B = (-1)*(b+1)*as_scalar(G.t()*j)/factor;
+            std::cout << "2B : " << B << std::endl;
+        }        
+        std::cout << "A : " << A << std::endl;        
+        std::cout << "iu8\n";
+        //discs[d1].velocity = -1*e*discs[d1].velocity*cos(theta)*k + (discs[d1].velocity*sin(theta) - B/discs[d1].mass)*j;
         //        std::cout << "iu9\n";
         J = A*k + B*j;
         std::cout << "J : {" << J[0] << ", "<< J[1] << ", "<< J[2] << "}\n";
-        discs[d1].angular_velocity = discs[d1].angular_velocity + (discs[d1].radius/discs[d1].I)*cross(k,J);
+        //discs[d1].angular_velocity = discs[d1].angular_velocity + (discs[d1].radius/discs[d1].I)*cross(k,J);
+        if(impulses.find(d1) == impulses.end())
+        {
+            impulses[d1] = {{0,0,0},{0,0,0}};
+            //        std::cout << "iu12\n";
+        }
+        impulses[d1][0] += J;
+        impulses[d1][1] += cross(k,J);
+        std::cout << "boundary impact\n";
+        return;
     }
     ////    std::cout << "iu10\n";
     vec diff_v = discs[d1].velocity - discs[d2].velocity;
@@ -168,7 +188,7 @@ void State::timeUpdate()
     for(auto&& d:discs)
     {
         d.position = d.position + predicted_collision.collision_instance*d.velocity - 0.5*n*g*predicted_collision.collision_instance*predicted_collision.collision_instance*normalise(d.velocity);
-        d.velocity = d.velocity -= n*g*predicted_collision.collision_instance*normalise(d.velocity);
+        d.velocity = d.velocity - n*g*predicted_collision.collision_instance*normalise(d.velocity);
     }
     std::cout << "after time update : \n";
     printDebug();
@@ -290,30 +310,35 @@ void State::updateState()
             double t = PICgenerator(activeIndices[i],activeIndices[k]);
             //            std::cout << "333\n";
             //            std::cout << "i,k" << i << "," << k << " : " << t << std::endl; 
-            if(t != -1 && t == minPICi.collision_instance || minPICi.collision_instance == -1)
+            if(t != -1)
             {
+                if(t == minPICi.collision_instance)
+                {
                 std::cout << "pushing to : " << activeIndices[i] << "->" << activeIndices[k] << std::endl;
                 minPICi.disc_indices[activeIndices[i]].push_back(activeIndices[k]);
-            }
-            if(t != -1 && (t < minPICi.collision_instance || minPICi.collision_instance == -1))
-            {
-                minPICi = PIC(t,activeIndices[i],activeIndices[k]);
+                }
+                if(t < minPICi.collision_instance || minPICi.collision_instance == -1)
+                {
+                    minPICi = PIC(t,activeIndices[i],activeIndices[k]);
+                }
             }
         }
         for(int k = 0; k < nonActiveIndices.size(); k++)
         {
             std::cout << "nonActiveIndices[" << k << "] = "<< nonActiveIndices[k]<< std::endl;
             double t = PICgenerator(activeIndices[i],nonActiveIndices[k]);
-            //            std::cout << "na,i,k" << i << activeIndices[i] << "," << k << nonActiveIndices[k] << " : " << t << std::endl; 
-            if(t != -1 && t == minPICi.collision_instance || minPICi.collision_instance == -1)
+                        std::cout << "na,i,k" << i << activeIndices[i] << "," << k << nonActiveIndices[k] << " : " << t << std::endl; 
+            if(t != -1)
             {
+                if(t == minPICi.collision_instance)
+                {
                 std::cout << "pushing to : " << activeIndices[i] << "->" << nonActiveIndices[k] << std::endl;
                 minPICi.disc_indices[activeIndices[i]].push_back(nonActiveIndices[k]);
-            }
-            if(t != -1 && (t < minPICi.collision_instance || minPICi.collision_instance == -1))
-            {
-                //std::cout << "pushing to : " << activeIndices[i] << "->" << nonActiveIndices[k] << std::endl;
-                minPICi = PIC(t,activeIndices[i],nonActiveIndices[k]);
+                }
+                if(t < minPICi.collision_instance || minPICi.collision_instance == -1)
+                {
+                    minPICi = PIC(t,activeIndices[i],nonActiveIndices[k]);
+                }
             }
         }
         if(minPICi.collision_instance != -1 && (minPICi.collision_instance < minPIC.collision_instance || minPIC.collision_instance == -1))
@@ -325,6 +350,7 @@ void State::updateState()
     if(minPIC.collision_instance == -1)
     {
         predicted_collision.collision_instance = -1;
+        computeStoppingTime(activeIndices);
         //push to state queue and stop loop
         return;
     }
@@ -337,17 +363,15 @@ void State::updateState()
             std::cout << m << ", ";
         cout <<"\n";
     }
-    //push to state queue
-    if(predicted_collision.collision_instance == -1)
-        computeStoppingTime(activeIndices);
-    //    std::cout << "36\n";
 }
 
 void State::computeStoppingTime(std::vector<int> activeIndices_)
 {
     if(activeIndices_.size() > 0)
     {
+        std::cout << "1\n";
         int pos = activeIndices_[0];
+        std::cout << "size of compst : " << activeIndices_.size() << std::endl;
         for(int a = 1;a < activeIndices_.size();a++)
         {
             if(norm(discs[activeIndices_[a]].velocity) > norm(discs[activeIndices_[a]].velocity)) 
@@ -355,10 +379,12 @@ void State::computeStoppingTime(std::vector<int> activeIndices_)
                 pos = a;
             }
         }
-        stopping_time = norm(discs[activeIndices_[pos]].velocity)/g;
+        std::cout << "1\n";
+        stopping_time = norm(discs[pos].velocity)/(n*g);
     }
     else
         stopping_time = 0;
+    std::cout << "STOPPING TIME  : " << stopping_time << std::endl;
 }
 
 void State::removeContact(const int& d1,const int& d2)
@@ -452,36 +478,60 @@ vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>> p)
 PIC State::PICgenerator(const int& d1)
 {
     double constr1 = discs[d1].radius,constr2 = board_length - discs[d1].radius;
-    std::vector<vec> a = {{constr1,-1,0},{constr2,-1,0},{-1,constr1,0},{-1,constr2,0}};
+    std::vector<vec> a = {{constr1,-1,0},{-1,constr2,0},{constr2,-1,0},{-1,constr1,0}};
     double tMin = -1;
     int index;
     int wall_no = 5;
     for(int i = 0; i < a.size(); i++)
     {
-        if(a[i](0,0) == -1)
-            index = 0;
-        else 
+        if(a[i][0] == -1)
             index = 1;
-        double coeff0 = discs[d1].position(index,0) - a[i](index,0);
-        double coeff1 = discs[d1].velocity(index,0);
+        else 
+            index = 0;
+        double coeff0 = a[i][index] - discs[d1].position[index];
+        double coeff1 = discs[d1].velocity[index]*(-1);
         vec nd = normalise(discs[d1].velocity);
-        double coeff2 = nd(index,0)*n*g*0.5;
-        double root;
-        double zero = 0;
-        if(solveCubic(zero,coeff2,coeff1,coeff0,root))
+        double coeff2 = nd[index]*n*g*0.5;
+        if(nd[index] < 0)
         {
+            coeff0 *= -1;
+            coeff1 *= -1;
+            coeff2 *= -1;
+        }
+        std::cout << "coeff0 : " << coeff0 <<std::endl;
+        std::cout << "coeff1 : " << coeff1 <<std::endl;
+        std::cout << "coeff2 : " << coeff2 <<std::endl;
+        double root;
+        if(solveQuadratic(coeff2,coeff1,coeff0,root))
+        {
+            std::cout << "root : " << root << "i : " << i << std::endl;
+            std::cout <<"hello\n";
+            std::cout << "nd : " << nd ;
+            std::cout <<"hello\n";
             index++;
             index%=2;
-            double other_coord = n*g*0.5*nd(index,0);
-            other_coord =other_coord + root*discs[d1].velocity(index,0) + discs[d1].position(index,0);
+            std::cout << "nd : " << nd ;
+            double other_coord = n*g*(-0.5)*nd[index];
+            if(n*g != 0)
+            {
+                std::vector<int> l = {d1};
+                computeStoppingTime(l);
+
+            }
+            std::cout << "yo\n";
+            other_coord =other_coord + root*discs[d1].velocity[index] + discs[d1].position[index];
             if(constr1 <= other_coord <= constr2)
             {
-                if(root < tMin || tMin == -1)
+                if((root < tMin || tMin == -1) && root > 1e-6)
                 {    
-                    tMin = root;
-                    wall_no = i+1;
+                    if(n*g == 0  || root < stopping_time)
+                    { 
+                        tMin = root;
+                        wall_no = i+1;
+                    }
                 }
             }
+            std::cout << "yo\n";
         }
     }
     return PIC(tMin,d1,-1*wall_no);
@@ -509,8 +559,8 @@ double State::PICgenerator(const int& d1,const int& d2)
     //    std::cout << "coeff4 : " << coeff4 << std::endl;
     double root = -1;
     bool tExists = solveQuartic(coeff4,coeff3,coeff2,coeff1,coeff0,root);
-    //    std::cout << "tExists : " << tExists << std::endl;
-    //    std::cout << "root found d1,d2 : " << d1 << ", " << d2 << " :" << root << std::endl;
+        std::cout << "tExists : " << tExists << std::endl;
+        std::cout << "root found d1,d2 : " << d1 << ", " << d2 << " :" << root << std::endl;
     if(tExists && root > 0)
     {
         return root;

@@ -15,9 +15,9 @@ const double PI = 3.14159265358979323846;
 //----------------------------------------------------------------------------
 bool solveQuadratic(double &a, double &b, double &c, double &root)
 {
-    if(a == 0.0 || abs(a/b) < 1.0e-6)
+    if(a == 0.0 || std::abs(a/b) < 1.0e-6)
     {
-        if(abs(b) < 1.0e-6) 
+        if(std::abs(b) < 1.0e-6) 
             return false;
         else
         {

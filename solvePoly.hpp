@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
-#include "disc.hpp"
+#ifndef _SOLVE_POLY_HPP_
+#define _SOLVE_POLY_HPP_
 
 /**
  * functions solveCubic and solveQuartic to solve 4th order polynomials 
@@ -13,11 +14,11 @@ using namespace std;
 const double PI = 3.14159265358979323846;
 
 //----------------------------------------------------------------------------
-bool solveQuadratic(double &a, double &b, double &c, double &root)
+bool solveQuadratic(double a, double b, double c, double &root)
 {
-    if(a == 0.0 || abs(a/b) < 1.0e-6)
+    if(a == 0.0 || abs(a/b) < 1.0e-10)
     {
-        if(abs(b) < 1.0e-4) 
+        if(abs(b) < 1.0e-4)
             return false;
         else
         {
@@ -38,7 +39,7 @@ bool solveQuadratic(double &a, double &b, double &c, double &root)
 }
 bool solveQuadraticOther(double a, double b, double c, double &root)
 {
-    if(a == 0.0 || abs(a/b) < 1.0e-4)
+    if(a == 0.0 || abs(a/b) < 1.0e-10)
     {
         if(abs(b) < 1.0e-4) 
             return false;
@@ -62,7 +63,7 @@ bool solveQuadraticOther(double a, double b, double c, double &root)
 
 bool solveCubic(double a, double b, double c, double d, double &root)
 {
-    if(a == 0.0 || abs(a/b) < 1.0e-6)
+    if(a == 0.0 || abs(a/b) < 1.0e-10)
         return solveQuadratic(b, c, d, root);
 
     double B = b/a, C = c/a, D = d/a;
@@ -109,18 +110,19 @@ bool solveCubic(double a, double b, double c, double d, double &root)
     }
 }
 
-
 bool solveQuartic(double a, double b, double c, double d, double e, double &root)
 {
     // I switched to this method, and it seems to be more numerically stable.
-    // http://www.gamedev.n...topic_id=451048 
+    // http://www.gamedev.net/community/forums/topic.asp?topic_id=451048 
 
     // When a or (a and b) are magnitudes of order smaller than C,D,E
     // just ignore them entirely. This seems to happen because of numerical
     // inaccuracies of the line-circle algorithm. I wanted a robust solver,
     // so I put the fix here instead of there.
-    if(a == 0.0 || abs(a/b) < 1.0e-5 || abs(a/c) < 1.0e-5 || abs(a/d) < 1.0e-5)
-        return solveCubic(b, c, d, e, root);
+    if(a == 0.0 || abs(a/b) < 1.0e-10 || abs(a/c) < 1.0e-10 || abs(a/d) < 1.0e-10)
+    {
+         return solveCubic(b, c, d, e, root);
+    }
 
     double B = b/a, C = c/a, D = d/a, E = e/a;
     double BB = B*B;
@@ -130,8 +132,7 @@ bool solveQuartic(double a, double b, double c, double d, double e, double &root
 
     double z;
     bool foundRoot2 = false, foundRoot3 = false, foundRoot4 = false, foundRoot5 = false;
-    double one = 1;
-    if(solveCubic(one, I+I, I*I - 4*K, -(J*J), z))
+    if(solveCubic(1.0, I+I, I*I - 4*K, -(J*J), z))
     {
         double value = z*z*z + z*z*(I+I) + z*(I*I - 4*K) - J*J;
 
@@ -142,31 +143,31 @@ bool solveQuartic(double a, double b, double c, double d, double e, double &root
 
         bool foundRoot = false, foundARoot;
         double aRoot;
-        foundRoot = solveQuadratic(one, p, q, root);
+        foundRoot = solveQuadratic(1.0, p, q, root);
         root -= B/4.0;
 
-        foundARoot = solveQuadratic(one, r, s, aRoot);
+        foundARoot = solveQuadratic(1.0, r, s, aRoot);
         aRoot -= B/4.0;
         if((foundRoot && foundARoot && ((aRoot < root && aRoot >= 0.0) 
-                        || root < 0.0)) || (!foundRoot && foundARoot)) 
+            || root < 0.0)) || (!foundRoot && foundARoot)) 
         {
             root = aRoot;
             foundRoot = true;
         }
 
-        foundARoot = solveQuadraticOther(one, p, q, aRoot);
+        foundARoot = solveQuadraticOther(1.0, p, q, aRoot);
         aRoot -= B/4.0;
         if((foundRoot && foundARoot && ((aRoot < root && aRoot >= 0.0) 
-                        || root < 0.0)) || (!foundRoot && foundARoot)) 
+            || root < 0.0)) || (!foundRoot && foundARoot)) 
         {
             root = aRoot;
             foundRoot = true;
         }
 
-        foundARoot = solveQuadraticOther(one, r, s, aRoot);
+        foundARoot = solveQuadraticOther(1.0, r, s, aRoot);
         aRoot -= B/4.0;
         if((foundRoot && foundARoot && ((aRoot < root && aRoot >= 0.0) 
-                        || root < 0.0)) || (!foundRoot && foundARoot)) 
+            || root < 0.0)) || (!foundRoot && foundARoot)) 
         {
             root = aRoot;
             foundRoot = true;

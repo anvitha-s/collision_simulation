@@ -449,9 +449,10 @@ int main( int argc, char* args[] )
     vec d1 = {10,200,0};
     vec v2 = {0,0,0};
     //vec d2 = {400,200,0};
-    vec d2 = {800 - DISC_RADIUS,200 + 10*sqrt(3) ,0};
-    vec d3 = {800 - DISC_RADIUS,200 - 10*sqrt(3) ,0};
-    vec d4 = {800,200,0};
+    vec d2 = {400 - DISC_RADIUS,200 + DISC_RADIUS*sqrt(3) ,0};
+    //vec d3 = {420,200,0};
+    vec d3 = {400 - DISC_RADIUS,200 - DISC_RADIUS*sqrt(3) ,0};
+    vec d4 = {400,200,0};
 
     std::vector<vec> position_map = {d1,d2,d3,d4};
     //    std::cout << "s1\n";

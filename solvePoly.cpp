@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include "disc.hpp"
 
 /**
  * functions solveCubic and solveQuartic to solve 4th order polynomials 
@@ -8,16 +7,15 @@
  * https://stackoverflow.com/questions/11837078/initialize-a-constant-sized-array-in-an-initializer-list
 */
 
+const double PI = 3.14159265358979323846;
 using namespace std;
 
-const double PI = 3.14159265358979323846;
-
 //----------------------------------------------------------------------------
-bool solveQuadratic(double &a, double &b, double &c, double &root)
+bool solveQuadratic(double a, double b, double c, double& root)
 {
-    if(a == 0.0 || std::abs(a/b) < 1.0e-6)
+    if(a == 0.0 || abs(a/b) < 1.0e-6)
     {
-        if(std::abs(b) < 1.0e-6) 
+        if(abs(b) < 1.0e-6) 
             return false;
         else
         {
@@ -36,6 +34,7 @@ bool solveQuadratic(double &a, double &b, double &c, double &root)
 
     return false;
 }
+
 bool solveQuadraticOther(double a, double b, double c, double &root)
 {
     if(a == 0.0 || abs(a/b) < 1.0e-6)
@@ -73,11 +72,11 @@ bool solveCubic(double a, double b, double c, double d, double &root)
     // 3 real roots
     if(RR<QQQ)
     {
-        /* This sqrt and division is safe, since RR >= 0, so QQQ > RR,    */
-        /* so QQQ > 0.  The acos is also safe, since RR/QQQ < 1, and      */
-        /* thus R/sqrt(QQQ) < 1.                                     */
+        // This sqrt and division is safe, since RR >= 0, so QQQ > RR,    
+        // so QQQ > 0.  The acos is also safe, since RR/QQQ < 1, and      
+        // thus R/sqrt(QQQ) < 1.                                     
         double theta = acos(R/sqrt(QQQ));
-        /* This sqrt is safe, since QQQ >= 0, and thus Q >= 0             */
+        // This sqrt is safe, since QQQ >= 0, and thus Q >= 0             
         double r1, r2, r3;
         r1 = r2 = r3 = -2.0*sqrt(Q);
         r1 *= cos(theta/3.0);

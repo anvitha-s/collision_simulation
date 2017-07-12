@@ -95,8 +95,9 @@ class StateQ
     void initialiseQueue(vec& initVel_,int noDiscs_,std::vector<vec> positionMap_);
     std::thread computationThread;
 };
- 
-bool solveQuadratic(double &a, double &b, double &c, double &root);
+/* 
+bool solveQuadratic(double a, double b, double c, double &root);
 bool solveCubic(double a, double b, double c, double d, double &root);
 bool solveQuartic(double a, double b, double c, double d, double e, double &root);
+*/
 #endif //_DISC_HPP_

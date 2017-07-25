@@ -29,8 +29,49 @@ vector<vec> State::findPOC(const int& d1,const int& d2)
     return {k,G};
 }
 
+bool State::isColliding(const int& d1, const int& d2)
+{
+    vec v1v2 = discs[d1].velocity - discs[d2].velocity;
+    vec c12 = discs[d2].position - discs[d1].position;
+    std::cout << "v1v2 : " << v1v2;
+    std::cout << "c12 : " << c12;
+    std::cout << "dot(v1v2,c12) : " << dot(v1v2,c12) << std::endl; 
+    if(dot(v1v2,c12) > 0)
+        return true;
+    return false;
+}
+
+void State::orderVector(int a,std::vector<int>& b)
+{
+    int min;
+    double c = -1;
+    vec c1c2;
+    double d1;
+    std::cout << "b : " << b[1] << std::endl;
+    for(int i = 0; i < b.size();i++)
+    {
+        c1c2 = normalise(discs[b[i]].position - discs[a].position);
+        d1 = dot(normalise(discs[a].velocity),c1c2);
+        if(d1 > c)
+        {
+            min = i;
+            c = d1;
+        }
+        std::cout << "b[i] : " << b[i] << " : " << d1 << std::endl;  
+    }
+    if(min != 1)
+    {
+        int c = b[1];
+        b[1] = b[min];
+        b[min] = c;
+    }
+    std::cout << "b : " << b[1] << std::endl;
+}
+
 void State::impactUpdate(const int& d1,const int& d2)
 {
+    if(!isColliding(d1,d2))
+        return;
     //std::cout << "start impact update\n";
     //position vector of 2 wrt 
     //std::cout << "iu1\n";
@@ -139,7 +180,7 @@ void State::velocityUpdate(int d1)
         auto it = impulses.find(d1);
         if(it != impulses.end())
         {
-            //std::cout << "updating impulses of : " << it->first << std::endl;
+            std::cout << "updating impulses of : " << it->first << std::endl;
             //std::cout << "impulses  " << it->second[0] << std::endl;
 //            std::cout << "impulses  " << it->second[0]/discs[it->first].mass << std::endl;
 //            std::cout << " impulses : " << it->second[1] << std::endl;
@@ -161,7 +202,7 @@ void State::velocityUpdate(int d1)
     }
     for(auto it = impulses.begin();it != impulses.end();it++)
     {
-//        std::cout << "updating impulses of : " << it->first << std::endl;
+        std::cout << "updating impulses of : " << it->first << std::endl;
 //        std::cout << "impulses  " << it->second[0] << std::endl;
 //        std::cout << "impulses  " << it->second[0]/discs[it->first].mass << std::endl;
 //        std::cout << " impulses : " << it->second[1] << std::endl;
@@ -202,6 +243,13 @@ void State::collisionUpdate()
     timeUpdate();
     while(predicted_collision.disc_indices.size() > 0)
     {   
+        std::cout << "contact pairs : \n";
+        for(int m = 0;m < NO_DISCS;m++)
+        {
+            std::cout << "\n" << m << "=> ";
+            for(auto n:discs[m].contact_pairs)
+                std::cout << n << ", ";
+        }
         for(auto it = predicted_collision.disc_indices.begin();it!=predicted_collision.disc_indices.end();++it)
     {
         std::cout << "DISC INDICES\n";
@@ -218,31 +266,67 @@ void State::collisionUpdate()
             //            std::cout << "391\n";
             impactUpdate(i[0],i[1]);
             //            std::cout << "3101\n";
+            removeContact(i[0],i[1]);
             velocityUpdate(i[0]);
         }
     }
     //    std::cout << "3111\n";
     predicted_collision.disc_indices.clear();
     //    std::cout << "3121\n";
-    predicted_collision.collision_instance = 0;
-    for(auto i = impulses.begin();i != impulses.end();++i)
+    //predicted_collision.collision_instance = 0;
+    //    std::cout << "3151\n";
+    velocityUpdate();
+    for(int i = 0;i < discs.size();i++)
     {
+        if(norm(discs[i].velocity) > 1e-6)
+        {
+            for(int j = 0;j< discs.size();j++)
+            {
+                if(j != i && (std::find(discs[i].contact_pairs.begin(),discs[i].contact_pairs.end(),j) == discs[i].contact_pairs.end()))
+                {
+                    if(inContact(i,j))
+                        std::cout << "CONTACTING " << i << ", " << j << std::endl;
+                }
+            }
+            for(int k = 0;k < discs[i].contact_pairs.size();k++)
+            {
+                if(isColliding(i,discs[i].contact_pairs[k]))
+                {
+                    std::cout << "IMMEDIATE COLLIDING : " << i << ", " << discs[i].contact_pairs[k] << std::endl;
+                    predicted_collision.disc_indices[i].push_back(discs[i].contact_pairs[k]);
+                    removeContact(i,discs[i].contact_pairs[k]);
+                    k--;
+                }
+            }
+            }
+
         //        std::cout << "3131\n";
+        /*
         if(discs[i->first].contact_pairs.size() > 0)
         {
             //            std::cout << "3141\n";
             predicted_collision.disc_indices[i->first] = discs[i->first].contact_pairs;
-            for(int b : discs[i->first].contact_pairs)
+            std::cout << "i->first : " << i->first << std::endl;
+            for(int b : predicted_collision.disc_indices[i->first])
+            {
+                std::cout << "b : " << b << std::endl;
                 removeContact(i->first,b);
+            }
         }
+        for(int j = 0;j< discs.size();j++)
+        {
+            if(j != i->first && (std::find(predicted_collision.disc_indices[i->first].begin(),predicted_collision.disc_indices[i->first].end(),j) == predicted_collision.disc_indices[i->first].end()))
+            {
+                std::cout << "CONTACTING " << i->first << ", " << j << std::endl;
+                inContact(i->first,j);
+            }
+        }*/
     }
-    //    std::cout << "3151\n";
-    velocityUpdate();
     //    std::cout << "312\n";
     }
 }
 
-void State::inContact(const int& d1,const int& d2)
+bool State::inContact(const int& d1,const int& d2)
 {
     //std::cout << "351\n";
     std::cout << discs[d1].position;
@@ -255,9 +339,13 @@ void State::inContact(const int& d1,const int& d2)
     if(std::abs(norm(c1c2) - (discs[d2].radius + discs[d1].radius)) <= 1e-3)
     {
         std::cout << "IN CONTACT : " << d1 << " & " << d2 << std::endl; 
-        discs[d1].contact_pairs.push_back(d2);   
-        discs[d2].contact_pairs.push_back(d1);   
+        if(find(discs[d1].contact_pairs.begin(),discs[d1].contact_pairs.end(),d2) == discs[d1].contact_pairs.end())
+            discs[d1].contact_pairs.push_back(d2);   
+        if(find(discs[d2].contact_pairs.begin(),discs[d2].contact_pairs.end(),d1) == discs[d2].contact_pairs.end())
+            discs[d2].contact_pairs.push_back(d1);   
+        return true;
     }
+    return false;
     //std::cout << "353\n";
 }
 
@@ -270,13 +358,14 @@ void State::updateState()
         std::cout << "collision update!!!!!!!!!!!!!!!!!!\n"; 
         collisionUpdate();
     }
-    //std::cout << "32\n";
+    //std::cout << "32\n"
 
     //create list of indices of active discs
     std::vector<int> activeIndices;
     std::vector<int> nonActiveIndices;
     for(int i = 0;i < discs.size() ;i++)
     {
+        discs[i].contact_pairs.clear();
         //std::cout << "33\n";
         if(norm(discs[i].velocity) >  1e-3)
         {
@@ -319,7 +408,7 @@ void State::updateState()
                         std::cout << "i,k" << i << "," << k << " : " << t << std::endl; 
             if(t != -1)
             {
-                if(fabs(t - minPICi.collision_instance) < 1e-6)
+                if(fabs(t - minPICi.collision_instance) < 1e-4)
                 {
                 std::cout << "pushing to : " << activeIndices[i] << "->" << activeIndices[k] << std::endl;
                 minPICi.disc_indices[activeIndices[i]].push_back(activeIndices[k]);
@@ -335,13 +424,13 @@ void State::updateState()
         {
             std::cout << "nonActiveIndices[" << k << "] = "<< nonActiveIndices[k]<< std::endl;
             double t = PICgenerator(activeIndices[i],nonActiveIndices[k]);
-                        std::cout << "na,i,k" << i << activeIndices[i] << "," << k << nonActiveIndices[k] << " : " << t << std::endl; 
+                        std::cout << "na,i,k" << i << activeIndices[i] << "," << k << nonActiveIndices[k] << " : " << t << std::endl;
             if(t != -1)
             {
-                if(fabs(t - minPICi.collision_instance) < 1e-6)
+                if(fabs(t - minPICi.collision_instance) < 1e-4)
                 {
-                std::cout << "pushing to : " << activeIndices[i] << "->" << nonActiveIndices[k] << std::endl;
-                minPICi.disc_indices[activeIndices[i]].push_back(nonActiveIndices[k]);
+                    std::cout << "pushing to : " << activeIndices[i] << "->" << nonActiveIndices[k] << std::endl;
+                    minPICi.disc_indices[activeIndices[i]].push_back(nonActiveIndices[k]);
                 }
                 else if(t < minPICi.collision_instance || minPICi.collision_instance == -1)
                 {
@@ -349,6 +438,14 @@ void State::updateState()
                     minPICi = PIC(t,activeIndices[i],nonActiveIndices[k]);
                 }
             }
+            /*if(inContact(activeIndices[i],nonActiveIndices[k]) && isColliding(activeIndices[i],nonActiveIndices[k]) && predicted_collision.collision_instance > 1e-13)
+            {
+                std::cout << "yello man!!!!!!" << std::endl;
+                if(minPICi.collision_instance == 0.0)
+                    minPICi.disc_indices[activeIndices[i]].push_back(nonActiveIndices[k]);
+                else
+                    minPICi = PIC(0.0,activeIndices[i],nonActiveIndices[k]);
+            }*/
         }
         if(minPICi.collision_instance != -1 && (minPICi.collision_instance < minPIC.collision_instance || minPIC.collision_instance == -1))
         {
@@ -400,13 +497,17 @@ void State::removeContact(const int& d1,const int& d2)
 {
     auto it = find(discs[d1].contact_pairs.begin(),discs[d1].contact_pairs.end(),d2);
     if(it != discs[d1].contact_pairs.end())
+    {
+        std::cout << "removing " << d2 << "from " << d1 << std::endl;
         discs[d1].contact_pairs.erase(it);
+    }
     it = find(discs[d2].contact_pairs.begin(),discs[d2].contact_pairs.end(),d1);
     if(it != discs[d2].contact_pairs.end())
+    {
+        std::cout << "removing " << d1 << "from " << d2 << std::endl;
         discs[d2].contact_pairs.erase(it);
+    }
 }
-
-void orderVector(vector<int> a){}
 
 vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>> p)
 {
@@ -431,9 +532,9 @@ vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>> p)
                     std::cout << "3811\n";
                     int i = rand()%8;
                     std::cout << "3812\n";
-                    orderVector(p.second);
+                    orderVector(p.first,p.second);
                     std::cout << "3813\n";
-                    if(0 <= i < 2)
+                    if(0 <= i && i < 2)
                     {
                         std::cout << "3814\n";
                         stack.push_back({p.first,p.second[1]});
@@ -461,11 +562,11 @@ vector<vector<int>> State::stackGenerator(std::pair<int,vector<int>> p)
                     else
                     {
                         std::cout << "3822\n";
-                        stack.push_back({p.first,p.second[0]});
+                        stack.push_back({p.first,p.second[2]});
                         std::cout << "3823\n";
                         stack.push_back({p.first,p.second[1]});
                         std::cout << "3824\n";
-                        stack.push_back({p.first,p.second[2]});
+                        stack.push_back({p.first,p.second[0]});
                     }
                     std::cout << "3825\n";
                     removeContact(p.second[0],p.second[1]);
@@ -510,7 +611,7 @@ PIC State::PICgenerator(const int& d1)
         std::cout << "coeff0 : " << coeff0 <<std::endl;
         std::cout << "coeff1 : " << coeff1 <<std::endl;
         std::cout << "coeff2 : " << coeff2 <<std::endl;
-        double root;
+        double root = 0;
         if(solveQuadratic(coeff2,coeff1,coeff0,root))
         {
             std::cout << "root : " << root << "i : " << i << std::endl;
@@ -551,20 +652,20 @@ double State::PICgenerator(const int& d1,const int& d2)
 {
     vec c1c2 = discs[d2].position - discs[d1].position;
     double coeff0 = dot(c1c2,c1c2) - (discs[d1].radius + discs[d2].radius)*(discs[d1].radius + discs[d2].radius);
-        std::cout << "coeff0 : " << coeff0 << std::endl;
     vec v2v1 = discs[d2].velocity - discs[d1].velocity;
     double coeff1 = 2*dot(v2v1,c1c2);
-        std::cout << "coeff1 : " << coeff1 << std::endl;
     //    std::cout << "here\n";
     vec a2a1 = (-1*n*g)*(normalise(discs[d2].velocity) - normalise(discs[d1].velocity));
     //    std::cout << "here  ok\n";
     double coeff3 = dot(a2a1,v2v1);
-        std::cout << "coeff3 : " << coeff3 << std::endl;
     double coeff2 = dot(c1c2,a2a1) + dot(v2v1,v2v1);
-        std::cout << "coeff2 : " << coeff2 << std::endl;
     double coeff4 = dot(a2a1,a2a1)/4;
         std::cout << "coeff4 : " << coeff4 << std::endl;
-    double root;
+        std::cout << "coeff3 : " << coeff3 << std::endl;
+        std::cout << "coeff2 : " << coeff2 << std::endl;
+        std::cout << "coeff1 : " << coeff1 << std::endl;
+        std::cout << "coeff0 : " << coeff0 << std::endl;
+    double root = 0;
     bool tExists = solveQuartic(coeff4,coeff3,coeff2,coeff1,coeff0,root);
     std::cout << "tExists : " << tExists << std::endl;
     std::cout << "root found d1,d2 : " << d1 << ", " << d2 << " :" << root << std::endl;
@@ -578,7 +679,7 @@ double State::PICgenerator(const int& d1,const int& d2)
             return -1;
         }
     }
-    if(tExists && root > 1e-3 && coeff0 > 1e-3)
+    if(tExists && isColliding(d1,d2))
     {
         return root;
     }

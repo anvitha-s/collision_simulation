@@ -17,7 +17,7 @@ int main()
     vec d7 = {origin + 2*DISC_RADIUS,200,0};
     vec d8 = {origin - 2*DISC_RADIUS,200,0};
 
-    std::vector<vec> position_map = {d1,d4,d3,d2,d8,d5,d6,d7};
+    std::vector<vec> position_map = {d1,d4,d3,d2,d5,d6,d7,d8};
     StateQ p;
     p.initialiseQueue(v1,NO_DISCS,position_map);
     p.computationThread.join();

@@ -36,7 +36,7 @@ bool State::isColliding(const int& d1, const int& d2)
     std::cout << "v1v2 : " << v1v2;
     std::cout << "c12 : " << c12;
     std::cout << "dot(v1v2,c12) : " << dot(v1v2,c12) << std::endl; 
-    if(dot(v1v2,c12) > 0)
+    if(dot(v1v2,c12) > 1e-12)
         return true;
     return false;
 }

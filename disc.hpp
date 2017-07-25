@@ -14,7 +14,7 @@ using namespace arma;
 #define INIT_STATE -2
 #define DISC_MASS 1
 #define DISC_RADIUS 10
-#define NO_DISCS 4
+#define NO_DISCS 8
 
 class Disc
 {
@@ -77,7 +77,7 @@ class State
     void updateState();
     vector<vec> findPOC(const int& d1,const int& d2);
     void impactUpdate(const int& d1,const int& d2);
-    void inContact(const int& d1,const int& d2);
+    bool inContact(const int& d1,const int& d2);
     void velocityUpdate(int d1 = -1);
     void collisionUpdate();
     void removeContact(const int& d1,const int& d2);
@@ -85,6 +85,9 @@ class State
 //    void updateVelocities(const int& d1,const int& d2);
     void printDebug();
     void timeUpdate();
+    void orderVector(int a,std::vector<int>& b);
+    bool isColliding(const int& d1, const int& d2);
+
 };
 
 class StateQ
